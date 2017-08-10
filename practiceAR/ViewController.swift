@@ -101,7 +101,9 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
 
     // Gets each frame as they are updated
     func session(_ session: ARSession, didUpdate frame: ARFrame) {
-        inputImage = CIImage(cvPixelBuffer: frame.capturedImage)
+        // Remove any existing layers
+        clearDrawingLayer()
+//        inputImage = CIImage(cvPixelBuffer: frame.capturedImage)
         
         rectangleDetector(frame: frame)
     }
@@ -149,7 +151,7 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
             return
         }
 
-        print("rectangle detected \(detectedRectangle)")
+        print("rectangle detected \(detectedRectangle.topRight), \(detectedRectangle.topLeft)\n \(detectedRectangle.bottomRight), \(detectedRectangle.bottomLeft)")
 //        let imageSize = inputImage.extent.size
 //
 //        // Verify detected rectangle is valid.
@@ -226,45 +228,18 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
     func drawLayer(rectangle: VNRectangleObservation) {
         print("Test Layer")
         
-//        let width = rectangle.topRight.x - rectangle.topLeft.x
-//        let height = rectangle.topLeft.y - rectangle.bottomLeft.y
-//
-//        shapeLayer.fillColor = UIColor(white: 0.6, alpha: 0.5).cgColor
-//        let path = UIBezierPath(rect: CGRect(x: rectangle.topLeft.x, y: rectangle.topLeft.y, width: width, height: height))
-//        path.lineWidth = 40
-//
-//        shapeLayer.path = path.cgPath
-//
-//
-//        sceneView.layer.addSublayer(shapeLayer)
-        setUpRWPath()
-    }
-    
-    func setUpRWPath() {
-        let rwPath = UIBezierPath()
-        rwPath.move(to: CGPoint(x: 0.22, y: 124.79))
-        rwPath.addLine(to: CGPoint(x: 0.22, y: 249.57))
-        rwPath.addLine(to: CGPoint(x: 124.89, y: 249.57))
-        rwPath.addLine(to: CGPoint(x: 249.57, y: 249.57))
-        rwPath.addLine(to: CGPoint(x: 249.57, y: 143.79))
-        rwPath.addCurve(to: CGPoint(x: 249.37, y: 38.25), controlPoint1: CGPoint(x: 249.57, y: 85.64), controlPoint2: CGPoint(x: 249.47, y: 38.15))
-        rwPath.addCurve(to:CGPoint(x: 206.47, y: 112.47), controlPoint1: CGPoint(x: 249.27, y: 38.35), controlPoint2: CGPoint(x: 229.94, y: 71.76))
-        rwPath.addCurve(to:CGPoint(x: 163.46, y: 186.84), controlPoint1: CGPoint(x: 182.99, y: 153.19), controlPoint2: CGPoint(x: 163.61, y: 186.65))
-        rwPath.addCurve(to:CGPoint(x: 146.17, y: 156.99), controlPoint1: CGPoint(x: 163.27, y: 187.03), controlPoint2: CGPoint(x: 155.48, y: 173.59))
-        rwPath.addCurve(to:CGPoint(x: 128.79, y: 127.08), controlPoint1: CGPoint(x: 136.82, y: 140.43), controlPoint2: CGPoint(x: 129.03, y: 126.94))
-        rwPath.addCurve(to:CGPoint(x: 109.31, y: 157.77), controlPoint1: CGPoint(x: 128.59, y: 127.18), controlPoint2: CGPoint(x: 119.83, y: 141.01))
-        rwPath.addCurve(to:CGPoint(x: 89.83, y: 187.86), controlPoint1: CGPoint(x: 98.79, y: 174.52), controlPoint2: CGPoint(x: 90.02, y: 188.06))
-        rwPath.addCurve(to:CGPoint(x: 56.52, y: 108.28), controlPoint1: CGPoint(x: 89.24, y: 187.23), controlPoint2: CGPoint(x: 56.56, y: 109.11))
-        rwPath.addCurve(to:CGPoint(x: 64.02, y: 102.25), controlPoint1: CGPoint(x: 56.47, y: 107.75), controlPoint2: CGPoint(x: 59.24, y: 105.56))
-        rwPath.addCurve(to:CGPoint(x: 101.42, y: 67.57), controlPoint1: CGPoint(x: 81.99, y: 89.78), controlPoint2: CGPoint(x: 93.92, y: 78.72))
-        rwPath.addCurve(to:CGPoint(x: 108.38, y: 30.65), controlPoint1: CGPoint(x: 110.28, y: 54.47), controlPoint2: CGPoint(x: 113.01, y: 39.96))
-        rwPath.addCurve(to:CGPoint(x: 10.35, y: 0.41), controlPoint1: CGPoint(x: 99.66, y: 13.17), controlPoint2: CGPoint(x: 64.11, y: 2.16))
-        rwPath.addLine(to: CGPoint(x: 0.22, y: 0.07))
-        rwPath.addLine(to: CGPoint(x: 0.22, y: 124.79))
-        rwPath.close()
+        let rectTopLeft = displayPointFromARPoint(arPoint: rectangle.topLeft)
+        let rectTopRight = displayPointFromARPoint(arPoint: rectangle.topRight)
+        let rectBottomLeft = displayPointFromARPoint(arPoint: rectangle.bottomLeft)
+//        let rectBottomRight = displayPointFromARPoint(arPoint: rectangle.bottomRight)
         
-        shapeLayer.path = rwPath.cgPath
-        shapeLayer.fillColor = UIColor.red.cgColor
+        let width = rectTopRight.x - rectTopLeft.x
+        let height = rectBottomLeft.y - rectTopLeft.y
+
+        let rectanglePath = UIBezierPath(rect: CGRect(x: rectTopLeft.x, y: rectTopLeft.y, width: width, height: height))
+
+        shapeLayer.path = rectanglePath.cgPath
+        shapeLayer.fillColor = UIColor(white: 1.0, alpha: 0.4).cgColor
         shapeLayer.fillRule = kCAFillRuleNonZero
         shapeLayer.lineCap = kCALineCapButt
         shapeLayer.lineDashPattern = nil
@@ -272,11 +247,27 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
         shapeLayer.lineJoin = kCALineJoinMiter
         shapeLayer.lineWidth = 1.0
         shapeLayer.miterLimit = 10.0
-        shapeLayer.strokeColor = UIColor.red.cgColor
+        shapeLayer.strokeColor = UIColor(white: 1.0, alpha: 1.0).cgColor
         
         DispatchQueue.main.async {
             self.sceneView.layer.addSublayer(self.shapeLayer)
         }
+    }
+    
+    func clearDrawingLayer() {
+        DispatchQueue.main.async {
+            if (self.sceneView.layer.sublayers?.last as? CAShapeLayer) != nil {
+                self.sceneView.layer.sublayers?.removeLast()
+            }
+        }
+    }
+    
+    func displayPointFromARPoint(arPoint: CGPoint) -> CGPoint {
+        let displaySize = UIScreen.main.bounds.size
+        let adjustedX = arPoint.x * displaySize.width
+        let adjustedY = arPoint.y * displaySize.height
+        
+        return CGPoint(x: adjustedX, y: adjustedY)
     }
     
     func handleRectangleDetection(request: VNRequest, error: Error?) {
