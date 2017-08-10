@@ -17,7 +17,7 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
     
     // MARK: - Vision Parts
     private var requests = [VNRequest()]
-    private var inputImage: UIImage!
+    var inputImage: CIImage!
     
     
     // MARK: -
@@ -93,7 +93,8 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
 
     // gets each frame as they are updated
     func session(_ session: ARSession, didUpdate frame: ARFrame) {
-        inputImage = frame.capt
+        inputImage = CIImage(cvPixelBuffer: frame.capturedImage)
+        
         rectangleDetector(frame: frame)
     }
     
@@ -143,12 +144,12 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
         }
         
         let imageSize = inputImage.extent.size
-        
+
         // Verify detected rectangle is valid.
         let boundingBox = detectedRectangle.boundingBox.scaled(to: imageSize)
         guard inputImage.extent.contains(boundingBox)
             else { print("invalid detected rectangle"); return }
-        
+
         // Rectify the detected image and reduce it to inverted grayscale for applying model.
         let topLeft = detectedRectangle.topLeft.scaled(to: imageSize)
         let topRight = detectedRectangle.topRight.scaled(to: imageSize)
@@ -161,7 +162,7 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
                 "inputTopRight": CIVector(cgPoint: topRight),
                 "inputBottomLeft": CIVector(cgPoint: bottomLeft),
                 "inputBottomRight": CIVector(cgPoint: bottomRight)
-                ])
+            ])
         
         print("rectangle found")
     }
