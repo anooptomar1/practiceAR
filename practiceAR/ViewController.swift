@@ -16,10 +16,6 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
     @IBOutlet var sceneView: ARSCNView!
     
     private var requests = [VNRequest()]
-    var inputImage: CIImage!
-//    let drawingLayer = CALayer()
-    let shapeLayer = CAShapeLayer()
-    
     
     // MARK: -
     
@@ -28,11 +24,8 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
         
         sceneView.delegate = self
         sceneView.session.delegate = self
-        
-        // Show statistics such as fps and timing information
         sceneView.showsStatistics = true
         
-//        setupDrawingLayer()
         setupVision()
     }
     
@@ -56,17 +49,6 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
     override func didReceiveMemoryWarning() {
         super.didReceiveMemoryWarning()
         // Release any cached data, images, etc that aren't in use.
-    }
-    
-    
-    // MARK: - Additional Setup
-    
-    func setupDrawingLayer() {
-//        drawingLayer.frame = sceneView.frame
-//        drawingLayer.delegate = self
-//        drawingLayer.needsDisplay()
-        
-//        sceneView.layer.addSublayer(drawingLayer)
     }
 
     
@@ -101,10 +83,6 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
 
     // Gets each frame as they are updated
     func session(_ session: ARSession, didUpdate frame: ARFrame) {
-        // Remove any existing layers
-        clearDrawingLayer()
-//        inputImage = CIImage(cvPixelBuffer: frame.capturedImage)
-        
         rectangleDetector(frame: frame)
     }
     
@@ -142,7 +120,6 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
     // 4. Request Handler Code
     func handleRectangles(request: VNRequest, error: Error?) {
         guard let observations = request.results as? [VNRectangleObservation] else {
-//            fatalError("unexpected result type from VNDetectRectanglesRequest")
             print("unexpected result type from VNDetectRectanglesRequest")
             return
         }
@@ -152,114 +129,6 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
         }
 
         print("rectangle detected \(detectedRectangle.topRight), \(detectedRectangle.topLeft)\n \(detectedRectangle.bottomRight), \(detectedRectangle.bottomLeft)")
-//        let imageSize = inputImage.extent.size
-//
-//        // Verify detected rectangle is valid.
-//        let boundingBox = detectedRectangle.boundingBox.scaled(to: imageSize)
-//        guard inputImage.extent.contains(boundingBox) else {
-//            print("invalid detected rectangle")
-//            return
-//        }
-        
-//        // TODO run on main thread
-//        UIGraphicsBeginImageContext(shapeLayer.frame.size)
-//        guard let context = UIGraphicsGetCurrentContext() else {
-//            print("NO GRAPHICS CONTEXT")
-//            return
-//        }
-        drawLayer(rectangle: detectedRectangle)
-        
-        // Rectify the detected image and reduce it to inverted grayscale for applying model.
-//        let topLeft = detectedRectangle.topLeft.scaled(to: imageSize)
-//        let topRight = detectedRectangle.topRight.scaled(to: imageSize)
-//        let bottomLeft = detectedRectangle.bottomLeft.scaled(to: imageSize)
-//        let bottomRight = detectedRectangle.bottomRight.scaled(to: imageSize)
-//        let correctedImage = inputImage
-//            .cropped(to: boundingBox)
-//            .applyingFilter("CIPerspectiveCorrection", parameters: [
-//                "inputTopLeft": CIVector(cgPoint: topLeft),
-//                "inputTopRight": CIVector(cgPoint: topRight),
-//                "inputBottomLeft": CIVector(cgPoint: bottomLeft),
-//                "inputBottomRight": CIVector(cgPoint: bottomRight)
-//            ])
-        // TODO: Draw the rectangle
-        
-    // MARK: Alternative
-        
-        //        guard let observations = request.results as? [VNRectangleObservation] else {
-        //            print("unexpected result type from VNDetectRectanglesRequest")
-        //            return
-        //        }
-        //        guard observations.first != nil else {
-        //            print("No rectangles detected.")
-        //            return
-        //        }
-        //        // Show the pre-processed image
-        //        DispatchQueue.main.async {
-        //            self.analyzedImageView.subviews.forEach({ (s) in
-        //                s.removeFromSuperview()
-        //            })
-        //            for rect in observations
-        //            {
-        //                let view = self.CreateBoxView(withColor: UIColor.cyan)
-        //                view.frame = self.transformRect(fromRect: rect.boundingBox, toViewRect: self.analyzedImageView)
-        //                self.analyzedImageView.image = self.originalImageView.image
-        //                self.analyzedImageView.addSubview(view)
-        //                self.loadingLbl.isHidden = true
-        //            }
-        //        }
-
-    }
-    
-//    func drawLayer(rectangle: VNRectangleObservation, layer: CALayer, context: CGContext) {
-//        print("Test Layer")
-//        context.setFillColor(gray: 0.6, alpha: 0.5)
-//
-//        let width = rectangle.topRight.x - rectangle.topLeft.x
-//        let height = rectangle.topLeft.y - rectangle.bottomLeft.y
-//
-//        context.fill(CGRect(x: rectangle.topLeft.x, y: rectangle.topLeft.y, width: width, height: height))
-//        // Drawing complete, retrieve the finished image and cleanup
-//
-//        layer.addSublayer(CALayer(layer: context))
-//
-//        UIGraphicsEndImageContext()
-//    }
-    func drawLayer(rectangle: VNRectangleObservation) {
-        print("Test Layer")
-        
-        let rectTopLeft = displayPointFromARPoint(arPoint: rectangle.topLeft)
-        let rectTopRight = displayPointFromARPoint(arPoint: rectangle.topRight)
-        let rectBottomLeft = displayPointFromARPoint(arPoint: rectangle.bottomLeft)
-//        let rectBottomRight = displayPointFromARPoint(arPoint: rectangle.bottomRight)
-        
-        let width = rectTopRight.x - rectTopLeft.x
-        let height = rectBottomLeft.y - rectTopLeft.y
-
-        let rectanglePath = UIBezierPath(rect: CGRect(x: rectTopLeft.x, y: rectTopLeft.y, width: width, height: height))
-
-        shapeLayer.path = rectanglePath.cgPath
-        shapeLayer.fillColor = UIColor(white: 1.0, alpha: 0.4).cgColor
-        shapeLayer.fillRule = kCAFillRuleNonZero
-        shapeLayer.lineCap = kCALineCapButt
-        shapeLayer.lineDashPattern = nil
-        shapeLayer.lineDashPhase = 0.0
-        shapeLayer.lineJoin = kCALineJoinMiter
-        shapeLayer.lineWidth = 1.0
-        shapeLayer.miterLimit = 10.0
-        shapeLayer.strokeColor = UIColor(white: 1.0, alpha: 1.0).cgColor
-        
-        DispatchQueue.main.async {
-            self.sceneView.layer.addSublayer(self.shapeLayer)
-        }
-    }
-    
-    func clearDrawingLayer() {
-        DispatchQueue.main.async {
-            if (self.sceneView.layer.sublayers?.last as? CAShapeLayer) != nil {
-                self.sceneView.layer.sublayers?.removeLast()
-            }
-        }
     }
     
     func displayPointFromARPoint(arPoint: CGPoint) -> CGPoint {
@@ -280,40 +149,6 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
         
         print("detected rectangle: \(detectedRectangle.topLeft) and \(detectedRectangle.bottomRight)")
     }
-    
-//    // TEMP new
-//    func drawRectangle() {
-//        let center = CGPointMake(self.frame.size.width / 2.0, self.frame.size.height / 2.0)
-//        let rectangleWidth:CGFloat = 100.0
-//        let rectangleHeight:CGFloat = 100.0
-//        let ctx = UIGraphicsGetCurrentContext()
-//
-//        //4
-//        CGContextAddRect(ctx, CGRectMake(center.x - (0.5 * rectangleWidth), center.y - (0.5 * rectangleHeight), rectangleWidth, rectangleHeight))
-//        CGContextSetLineWidth(ctx, 10)
-//        CGContextSetStrokeColorWithColor(ctx, UIColor.grayColor().CGColor)
-//        CGContextStrokePath(ctx)
-//
-//        //5
-//        CGContextSetFillColorWithColor(ctx, UIColor.greenColor().CGColor)
-//        CGContextAddRect(ctx, CGRectMake(center.x - (0.5 * rectangleWidth), center.y - (0.5 * rectangleHeight), rectangleWidth, rectangleHeight))
-//
-//        CGContextFillPath(ctx)
-//    }
-    
-    // Delegate function that draws to a CALayer
-//    func draw(_ layer: CALayer, in ctx: CGContext) {
-//        print("Test Layer")
-//        ctx.setFillColor(gray: 0.6, alpha: 0.5)
-//
-////        let width = rectangle.topRight.x - rectangle.topLeft.x
-////        let height = rectangle.topLeft.y - rectangle.bottomLeft.y
-////
-////        ctx.fill(CGRect(x: rectangle.topLeft.x, y: rectangle.topLeft.y, width: width, height: height))
-//        ctx.fill(CGRect(x: 0, y: 0, width: 10, height: 10))
-//    }
-    
-    
     
     func exifOrientationFromDevice() -> CGImagePropertyOrientation {
         var exifOrientation: CGImagePropertyOrientation = CGImagePropertyOrientation(.up)
